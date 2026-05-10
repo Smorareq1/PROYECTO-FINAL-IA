@@ -1,0 +1,32 @@
+sample_rate: 16000
+n_fft: 512
+win_length: 400
+hop_length: 160
+n_mels: 40
+n_mfcc: 13
+f_min: 50
+f_max: 8000
+log_mels: true
+
+vad:
+  frame_length_ms: 25
+  hop_length_ms: 10
+  noise_floor_duration_ms: 200
+  energy_threshold_multiplier: 5.0
+  zcr_threshold: 0.3
+
+normalization:
+  peak_max: 0.95
+  rms_min: 0.01
+
+augmentation:
+  time_shift_ms: 200
+  pitch_shift_semitones: 2
+  noise_snr_range: [15, 25]
+  background_snr_range: [10, 20]
+  spec_augment:
+    freq_mask_bands: 2
+    freq_mask_max_width: 8
+    time_mask_bands: 2
+    time_mask_max_width: 25
+  variants_per_sample: 4
