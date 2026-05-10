@@ -1,0 +1,22 @@
+serial:
+  port: auto
+  baudrate: 115200
+  timeout: 0.1
+  heartbeat_interval_seconds: 10
+
+inference:
+  confidence_threshold: 0.85
+  compound_confidence_threshold: 0.80
+  buffer_duration_seconds: 3.0
+  chunk_duration_ms: 320
+
+dashboard:
+  host: 127.0.0.1
+  port: 8000
+  ws_path: /ws/inference
+
+logging:
+  level: INFO
+  format: structured
+  log_predictions_to_csv: true
+  csv_path: logs/predictions.csv

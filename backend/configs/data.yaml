@@ -1,0 +1,32 @@
+sample_rate: 16000
+audio_format: wav
+bit_depth: 16
+channels: 1
+duration_seconds: 2.0
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  augmented: data/augmented
+  splits: data/splits
+  speakers: data/speakers.csv
+
+classes:
+  simple:
+    - enciende
+    - apaga
+    - izquierda
+    - derecha
+    - detente
+    - ruido_fondo
+  compound:
+    - enciende_rapido
+    - enciende_lento
+    - gira_izquierda
+    - gira_derecha
+
+splits:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  stratify_by_speaker: true
