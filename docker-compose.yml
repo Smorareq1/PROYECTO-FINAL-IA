@@ -19,8 +19,6 @@ services:
       - LOG_LEVEL=INFO
       - DASHBOARD_HOST=0.0.0.0
       - DASHBOARD_PORT=8000
-    devices:
-      - /dev/ttyUSB0:/dev/ttyUSB0
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]

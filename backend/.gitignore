@@ -49,6 +49,12 @@ data/processed/**/*.mp3
 data/augmented/**/*.mp3
 
 # =====================
+# Mock data (sintetica)
+# =====================
+data/raw_mock/
+data/speakers_mock.csv
+
+# =====================
 # Modelos (solo commitear los finales)
 # =====================
 models/**/*.pt
