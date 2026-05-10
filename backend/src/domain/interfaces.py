@@ -1,0 +1,39 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+import numpy as np
+import torch
+
+from src.domain.commands import Command
+from src.domain.prediction import ModelOutput, Prediction
+
+
+class Actuator(Protocol):
+    def execute(self, command: Command) -> None: ...
+    def reset(self) -> None: ...
+    def is_connected(self) -> bool: ...
+
+
+class Predictor(Protocol):
+    def predict(self, features: torch.Tensor) -> ModelOutput: ...
+    def load(self, path: str) -> None: ...
+
+
+class FeatureExtractor(Protocol):
+    def extract(self, waveform: torch.Tensor) -> torch.Tensor: ...
+
+
+class VoiceDetector(Protocol):
+    def detect_speech(self, signal: np.ndarray, sr: int) -> tuple[int, int]: ...
+    def is_speech(self, signal: np.ndarray, sr: int) -> bool: ...
+
+
+class AudioSource(Protocol):
+    def read_chunk(self) -> np.ndarray: ...
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+
+
+class EventBroadcaster(Protocol):
+    async def publish(self, event: dict[str, object]) -> None: ...
