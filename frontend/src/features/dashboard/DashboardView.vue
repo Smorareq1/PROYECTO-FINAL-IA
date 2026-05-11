@@ -17,40 +17,68 @@ usePolling(() => systemStore.refresh(), POLL_INTERVAL_MS)
 </script>
 
 <template>
-  <div class="dashboard-grid">
-    <div class="dashboard-grid__main">
+  <div class="dash">
+    <section class="dash__hero">
       <CommandDisplay />
-    </div>
+    </section>
 
-    <div class="dashboard-grid__sidebar">
+    <aside class="dash__side">
       <ListeningIndicator />
       <CommandGrid />
-    </div>
+    </aside>
 
-    <div class="dashboard-grid__chart-left">
+    <section class="dash__chart dash__chart--left">
       <ConfidenceChart />
-    </div>
+    </section>
 
-    <div class="dashboard-grid__chart-right">
+    <section class="dash__chart dash__chart--right">
       <LatencyChart />
-    </div>
+    </section>
 
-    <div class="dashboard-grid__log">
+    <section class="dash__log">
       <PredictionLog />
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.dashboard-grid {
+.dash {
   display: grid;
-  grid-template-columns: 1fr 1fr 320px;
-  grid-template-rows: auto auto 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.55fr);
+  grid-template-areas:
+    'hero  side'
+    'chL   side'
+    'chR   side'
+    'log   log';
   gap: 1.25rem;
+  margin-top: 1.5rem;
 }
-.dashboard-grid__main      { grid-column: 1 / 3; }
-.dashboard-grid__sidebar   { grid-column: 3 / 4; grid-row: 1 / 3; display: flex; flex-direction: column; gap: 1.25rem; }
-.dashboard-grid__chart-left  { grid-column: 1 / 2; }
-.dashboard-grid__chart-right { grid-column: 2 / 3; }
-.dashboard-grid__log       { grid-column: 1 / 4; }
+
+.dash__hero  { grid-area: hero; }
+.dash__side  { grid-area: side; display: flex; flex-direction: column; gap: 1.25rem; }
+.dash__chart--left  { grid-area: chL; }
+.dash__chart--right { grid-area: chR; }
+.dash__log   { grid-area: log; }
+
+@media (min-width: 1280px) {
+  .dash {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(320px, 0.5fr);
+    grid-template-areas:
+      'hero hero side'
+      'chL  chR  side'
+      'log  log  log';
+  }
+}
+
+@media (max-width: 900px) {
+  .dash {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'hero'
+      'side'
+      'chL'
+      'chR'
+      'log';
+  }
+}
 </style>
