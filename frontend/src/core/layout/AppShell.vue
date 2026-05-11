@@ -3,27 +3,48 @@ import AppHeader from './AppHeader.vue'
 </script>
 
 <template>
-  <div class="app-shell">
+  <div class="shell">
     <AppHeader />
-    <main class="app-shell__main">
+    <main class="shell__main">
       <RouterView />
     </main>
+    <footer class="shell__footer">
+      <span class="eyebrow">Asistente Robotico v1.0</span>
+      <span class="eyebrow shell__footer-meta">Voice Command Lab &middot; Universidad Rafael Landivar</span>
+    </footer>
   </div>
 </template>
 
 <style scoped>
-.app-shell {
+.shell {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--color-bg, #0f172a);
-  color: var(--color-text, #f1f5f9);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
-.app-shell__main {
-  flex: 1;
-  padding: 1.5rem 2rem;
-  max-width: 1600px;
-  margin: 0 auto;
+
+.shell__main {
   width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 1.5rem 2.5rem 2.5rem;
+}
+
+.shell__footer {
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1680px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.shell__footer-meta { color: var(--color-text-secondary); }
+
+@media (max-width: 1024px) {
+  .shell__main, .shell__footer { padding-left: 1.25rem; padding-right: 1.25rem; }
 }
 </style>

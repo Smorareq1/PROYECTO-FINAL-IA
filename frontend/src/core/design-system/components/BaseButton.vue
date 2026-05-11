@@ -1,15 +1,20 @@
 <script setup lang="ts">
 defineProps<{
-  variant?: 'primary' | 'ghost' | 'danger'
+  variant?: 'primary' | 'ghost' | 'danger' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
+  block?: boolean
 }>()
 </script>
 
 <template>
   <button
-    class="base-btn"
-    :class="[`base-btn--${variant ?? 'primary'}`, `base-btn--${size ?? 'md'}`]"
+    class="btn"
+    :class="[
+      `btn--${variant ?? 'primary'}`,
+      `btn--${size ?? 'md'}`,
+      block ? 'btn--block' : '',
+    ]"
     :disabled="disabled"
   >
     <slot />
@@ -17,51 +22,68 @@ defineProps<{
 </template>
 
 <style scoped>
-.base-btn {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  border-radius: var(--radius-md, 8px);
+  gap: 0.5rem;
+  font-family: var(--font-mono);
   font-weight: 500;
-  cursor: pointer;
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--color-border, #334155);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-snap);
 }
-.base-btn:active { transform: scale(0.95); }
-.base-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn--block { width: 100%; }
 
-.base-btn--sm { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
-.base-btn--md { padding: 0.6rem 1rem; font-size: 0.8rem; }
-.base-btn--lg { padding: 0.8rem 1.5rem; font-size: 0.9rem; }
+.btn--sm { padding: 0.45rem 0.85rem; font-size: 0.7rem; }
+.btn--md { padding: 0.6rem 1.1rem;  font-size: 0.75rem; }
+.btn--lg { padding: 0.85rem 1.5rem; font-size: 0.8rem; }
 
-.base-btn--primary {
-  background: var(--color-card-hover, #334155);
-  color: var(--color-text, #f1f5f9);
+.btn--primary {
+  background: var(--color-inverse);
+  color: var(--color-text-on-inverse);
+  border-color: var(--color-inverse);
 }
-.base-btn--primary:hover:not(:disabled) {
-  border-color: var(--color-accent, #38bdf8);
-  background: rgba(56, 189, 248, 0.1);
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
-.base-btn--ghost {
+.btn--outline {
   background: transparent;
-  color: var(--color-text-secondary, #94a3b8);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
 }
-.base-btn--ghost:hover:not(:disabled) {
-  color: var(--color-text, #f1f5f9);
-  background: rgba(255, 255, 255, 0.05);
+.btn--outline:hover:not(:disabled) {
+  background: var(--color-inverse);
+  color: var(--color-text-on-inverse);
 }
 
-.base-btn--danger {
-  background: var(--color-card-hover, #334155);
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.3);
+.btn--ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
 }
-.base-btn--danger:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.1);
-  border-color: #f87171;
+.btn--ghost:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.btn--danger {
+  background: var(--color-bg);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.btn--danger:hover:not(:disabled) {
+  background: var(--color-danger);
+  color: var(--color-bg);
 }
 </style>

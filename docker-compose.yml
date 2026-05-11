@@ -31,29 +31,22 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: voz-asistente-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # Servicio opcional para desarrollo (hot reload)
-  frontend-dev:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
       target: dev
-    container_name: voz-asistente-frontend-dev
+    container_name: voz-asistente-frontend
     ports:
       - "5173:5173"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/tsconfig.app.json:/app/tsconfig.app.json
+      - ./frontend/tsconfig.node.json:/app/tsconfig.node.json
     environment:
       - VITE_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - backend
-    profiles:
-      - dev
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
