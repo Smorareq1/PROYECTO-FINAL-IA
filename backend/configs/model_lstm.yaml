@@ -1,0 +1,21 @@
+name: BiLSTMSequentialClassifier
+n_classes: 4
+n_mfcc: 13
+
+architecture:
+  lstm_1:
+    input_size: 13
+    hidden_size: 64
+    num_layers: 1
+    bidirectional: true
+    dropout: 0.0
+  lstm_2:
+    input_size: 128
+    hidden_size: 32
+    num_layers: 1
+    bidirectional: true
+
+head:
+  dropout: 0.4
+  fc1_out: 32
+  fc2_out: 4

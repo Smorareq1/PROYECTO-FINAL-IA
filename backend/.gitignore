@@ -1,0 +1,97 @@
+# =====================
+# Python
+# =====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+*.egg
+pip-log.txt
+
+# =====================
+# Entornos virtuales
+# =====================
+.venv/
+venv/
+env/
+.conda/
+
+# =====================
+# Type checking / lint / test
+# =====================
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# =====================
+# Jupyter
+# =====================
+.ipynb_checkpoints/
+*.ipynb_output/
+
+# =====================
+# Datos grandes
+# =====================
+data/raw/**/*.wav
+data/processed/**/*.wav
+data/augmented/**/*.wav
+data/raw/**/*.mp3
+data/processed/**/*.mp3
+data/augmented/**/*.mp3
+
+# =====================
+# Mock data (sintetica)
+# =====================
+data/raw_mock/
+data/speakers_mock.csv
+
+# =====================
+# Modelos (solo commitear los finales)
+# =====================
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+!models/cnn_base/model.pt
+!models/bilstm/model.pt
+
+# =====================
+# Logs
+# =====================
+logs/
+*.log
+
+# =====================
+# Variables de entorno
+# =====================
+.env
+.env.local
+
+# =====================
+# IDE
+# =====================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =====================
+# OS
+# =====================
+Thumbs.db
+.DS_Store
+
+# =====================
+# PyTorch / CUDA
+# =====================
+*.ckpt
+wandb/
+runs/

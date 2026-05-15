@@ -1,0 +1,71 @@
+# =====================
+# OS
+# =====================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+
+# =====================
+# IDEs / Editores
+# =====================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# =====================
+# Claude Code
+# =====================
+.claude/
+
+# =====================
+# Variables de entorno
+# =====================
+.env
+.env.local
+.env.*.local
+
+# =====================
+# Python (global)
+# =====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# =====================
+# Node (global)
+# =====================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+
+# =====================
+# Docker
+# =====================
+docker-compose.override.yml
+
+# =====================
+# Logs
+# =====================
+logs/
+*.log

@@ -1,0 +1,42 @@
+export const typography = {
+  fontFamily: {
+    serif: "'Fraunces', 'Iowan Old Style', 'Apple Garamond', Georgia, ui-serif, serif",
+    sans:  "'Inter', 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif",
+    mono:  "'JetBrains Mono', 'Cascadia Code', 'Fira Code', Consolas, ui-monospace, monospace",
+  },
+  fontSize: {
+    xs:    '0.75rem',
+    sm:    '0.8125rem',
+    base:  '0.9375rem',
+    lg:    '1.0625rem',
+    xl:    '1.25rem',
+    '2xl': '1.625rem',
+    '3xl': '2.25rem',
+    '4xl': '3rem',
+    '5xl': '4.5rem',
+    '6xl': '6rem',
+  },
+  fontWeight: {
+    light:    '300',
+    normal:   '400',
+    medium:   '500',
+    semibold: '600',
+    bold:     '700',
+    black:    '900',
+  },
+  lineHeight: {
+    tight:   '1.05',
+    snug:    '1.2',
+    normal:  '1.5',
+    relaxed: '1.65',
+  },
+  letterSpacing: {
+    tightest: '-0.04em',
+    tighter:  '-0.02em',
+    tight:    '-0.01em',
+    normal:   '0',
+    wide:     '0.05em',
+    wider:    '0.12em',
+    widest:   '0.2em',
+  },
+} as const
