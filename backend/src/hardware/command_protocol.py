@@ -1,42 +1,45 @@
 from __future__ import annotations
 
-from src.domain.commands import Command, HEARTBEAT_BYTE, RESET_BYTE
+from src.domain.commands import Command, SYSTEM_OFF, SYSTEM_RECHAZO
 
-
-PROTOCOL_MAP: dict[Command, int] = {
-    Command.ENCIENDE: 0x01,
-    Command.APAGA: 0x02,
-    Command.IZQUIERDA: 0x03,
-    Command.DERECHA: 0x04,
-    Command.DETENTE: 0x05,
-    Command.ENCIENDE_RAPIDO: 0x10,
-    Command.ENCIENDE_LENTO: 0x11,
-    Command.GIRA_IZQUIERDA: 0x12,
-    Command.GIRA_DERECHA: 0x13,
+# Mapeo Command → string ASCII (el Arduino hace Serial.readStringUntil('\n'))
+PROTOCOL_MAP: dict[Command, str] = {
+    Command.ENCIENDE: "enciende",
+    Command.APAGA: "apaga",
+    Command.DETENTE: "detente",
+    Command.ROJO: "rojo",
+    Command.VERDE: "verde",
+    Command.AZUL: "azul",
+    Command.BLANCO: "blanco",
+    Command.PROCESANDO: "procesando",
+    Command.ALARMA: "alarma",
+    Command.TONO: "tono",
 }
 
-PROTOCOL_DESCRIPTION: dict[int, str] = {
-    0x01: "Cierra rele",
-    0x02: "Abre rele",
-    0x03: "Motor pasos: 512 antihorario",
-    0x04: "Motor pasos: 512 horario",
-    0x05: "Beep 200ms y todo apagado",
-    0x10: "Rele ON + LED RGB blanco brillante",
-    0x11: "Rele ON + LED RGB azul tenue con fade",
-    0x12: "Motor pasos: 1024 antihorario",
-    0x13: "Motor pasos: 1024 horario",
-    HEARTBEAT_BYTE: "Heartbeat (Arduino responde 0xFE)",
-    RESET_BYTE: "Reset a estado inicial",
+# Descripción humana del efecto físico que dispara cada comando
+PROTOCOL_DESCRIPTION: dict[str, str] = {
+    "enciende":   "Rele ON + RGB blanco + beep activo 100ms",
+    "apaga":      "Rele OFF + RGB apagado + beep activo 100ms",
+    "detente":    "Apaga todo (rele/RGB/LEDs) + beep activo 250ms",
+    "rojo":       "RGB rojo (255, 0, 0)",
+    "verde":      "RGB verde (0, 255, 0)",
+    "azul":       "RGB azul (0, 0, 255)",
+    "blanco":     "RGB blanco brillante (255, 255, 255)",
+    "procesando": "LED amarillo + RGB naranja transitorio (procesando)",
+    "alarma":     "4x parpadeo rojo + buzzer pasivo 1kHz + buzzer activo",
+    "tono":       "Melodia 3 notas en buzzer pasivo (800-1200-1600 Hz)",
+    SYSTEM_RECHAZO: "(sistema) LED rojo + buzzer 250Hz cuando la confianza < umbral",
+    SYSTEM_OFF:    "(sistema) Apaga todo, deja LED verde de escucha",
 }
 
 
-def command_to_byte(command: Command) -> int:
-    return command.to_protocol_byte()
+def command_to_string(command: Command) -> str:
+    return command.to_protocol_string()
 
 
-def byte_to_command(byte: int) -> Command:
-    return Command.from_protocol_byte(byte)
+def string_to_command(text: str) -> Command:
+    return Command.from_protocol_string(text)
 
 
-def describe_byte(byte: int) -> str:
-    return PROTOCOL_DESCRIPTION.get(byte, f"Unknown byte: 0x{byte:02X}")
+def describe(text: str) -> str:
+    return PROTOCOL_DESCRIPTION.get(text.strip().lower(), f"Unknown command: {text!r}")
