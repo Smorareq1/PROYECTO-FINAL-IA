@@ -43,23 +43,24 @@ DURATION_SEC = 1.5    # Duración media de una muestra
 # Esto imita que cada palabra tiene resonancias vocálicas distintas.
 # Los valores son tripletas (F1, F2, F3) en Hz que se asemejan a vocales reales.
 CLASS_FORMANTS: dict[str, tuple[int, int, int]] = {
-    # Comandos simples (modelo CNN base)
+    # Comandos simples (modelo CNN base) — vocablos cortos
     "enciende":         (450, 1800, 2500),   # /e/ + /i/ dominante
     "apaga":            (700, 1200, 2400),   # /a/ dominante
-    "izquierda":        (350, 2100, 2700),   # /i/ inicial fuerte
-    "derecha":          (550, 1700, 2400),   # /e/ media
-    "detente":          (500, 1900, 2600),   # /e/ + /e/ similar
+    "detente":          (500, 1900, 2600),   # /e/ + /e/
+    "rojo":             (600, 1100, 2300),   # /o/ + /o/
+    "verde":            (500, 1700, 2400),   # /e/ + /e/ con /r/
+    "azul":             (350, 900, 2200),    # /a/ + /u/ (cierre)
     "ruido_fondo":      (0, 0, 0),           # sin formantes, solo ruido
 
-    # Comandos compuestos (modelo BiLSTM) — duración doble
-    "enciende_rapido":  (450, 1800, 2500),   # mismo inicio que "enciende"
-    "enciende_lento":   (450, 1800, 2500),   # mismo inicio
-    "gira_izquierda":   (400, 2000, 2700),   # mezcla
-    "gira_derecha":     (500, 1700, 2400),   # mezcla
+    # Comandos compuestos (modelo BiLSTM) — duración doble / multipaso
+    "blanco":           (400, 1500, 2400),   # /a/ + /o/ con nasal
+    "procesando":       (520, 1600, 2500),   # /o/ + /e/ + /a/ + /o/
+    "alarma":           (700, 1300, 2300),   # /a/ + /a/ + /a/ dominante
+    "tono":             (500, 1100, 2400),   # /o/ + /o/ con /t/ ataque
 }
 
 COMPOUND_CLASSES = {
-    "enciende_rapido", "enciende_lento", "gira_izquierda", "gira_derecha"
+    "blanco", "procesando", "alarma", "tono"
 }
 
 

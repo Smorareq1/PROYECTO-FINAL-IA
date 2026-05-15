@@ -13,7 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const color = colors.command[props.meta.name as CommandColor] ?? colors.text.primary
-const byteHex = `0x${props.meta.byte.toString(16).padStart(2, '0').toUpperCase()}`
+const serialTag = `"${props.meta.serial}"`
 </script>
 
 <template>
@@ -26,7 +26,7 @@ const byteHex = `0x${props.meta.byte.toString(16).padStart(2, '0').toUpperCase()
   >
     <span class="cmd__chip" />
     <span class="cmd__label">{{ meta.label }}</span>
-    <span class="cmd__byte tnum">{{ byteHex }}</span>
+    <span class="cmd__byte tnum">{{ serialTag }}</span>
   </button>
 </template>
 

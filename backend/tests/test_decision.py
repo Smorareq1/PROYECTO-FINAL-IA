@@ -35,22 +35,22 @@ def test_from_cnn_ruido_fondo_always_rejects(decision: DecisionLayer):
 
 def test_combine_prefers_lstm_high_confidence(decision: DecisionLayer):
     cnn = _make_output(Command.ENCIENDE, 0.90)
-    lstm = _make_output(Command.ENCIENDE_RAPIDO, 0.92)
+    lstm = _make_output(Command.BLANCO, 0.92)
     pred = decision.combine(cnn, lstm)
-    assert pred.command == Command.ENCIENDE_RAPIDO
+    assert pred.command == Command.BLANCO
     assert pred.confidence == 0.92
 
 
 def test_combine_falls_back_to_cnn_when_lstm_low(decision: DecisionLayer):
     cnn = _make_output(Command.ENCIENDE, 0.90)
-    lstm = _make_output(Command.ENCIENDE_RAPIDO, 0.50)
+    lstm = _make_output(Command.BLANCO, 0.50)
     pred = decision.combine(cnn, lstm)
     assert pred.command == Command.ENCIENDE
 
 
 def test_should_use_lstm_for_compound_candidates(decision: DecisionLayer):
     assert decision.should_use_lstm(_make_output(Command.ENCIENDE, 0.70))
-    assert decision.should_use_lstm(_make_output(Command.GIRA_IZQUIERDA, 0.70))
+    assert decision.should_use_lstm(_make_output(Command.ALARMA, 0.70))
 
 
 def test_should_not_use_lstm_for_simple_commands(decision: DecisionLayer):

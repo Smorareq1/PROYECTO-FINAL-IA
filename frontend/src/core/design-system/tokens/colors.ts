@@ -39,15 +39,18 @@ export const colors = {
     soft: '#e4ebf3',
   },
   command: {
-    enciende:        '#1f7a4d',
-    apaga:           '#c1121f',
-    izquierda:       '#1d3557',
-    derecha:         '#6f4e37',
-    detente:         '#b8860b',
-    enciende_rapido: '#2a9d8f',
-    enciende_lento:  '#457b9d',
-    gira_izquierda:  '#264653',
-    gira_derecha:    '#774936',
+    // Simples
+    enciende:   '#1f7a4d',
+    apaga:      '#525252',
+    detente:    '#b8860b',
+    rojo:       '#c1121f',
+    verde:      '#1f7a4d',
+    azul:       '#1d3557',
+    // Compuestos
+    blanco:     '#0a0a0a',
+    procesando: '#b8860b',
+    alarma:     '#9b1c1c',
+    tono:       '#6b21a8',
   },
 } as const
 
