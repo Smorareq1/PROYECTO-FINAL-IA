@@ -35,7 +35,7 @@ const int PIN_LED_ROJO     = A1;
 
 // true: relé se activa con LOW (módulos comunes de 1 canal)
 // false: relé se activa con HIGH
-const bool RELE_ACTIVO_LOW = true;
+const bool RELE_ACTIVO_LOW = false;
 
 String comando = "";
 

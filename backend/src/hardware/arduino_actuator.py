@@ -48,7 +48,7 @@ class MockActuator:
         logger.info("[MOCK] stop_all")
 
     def is_connected(self) -> bool:
-        return True
+        return False
 
     @property
     def last_command(self) -> Command | None:

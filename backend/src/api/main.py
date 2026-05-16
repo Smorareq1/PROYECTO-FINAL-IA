@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -12,7 +13,10 @@ from src.api.routes import inference, manual, status
 from src.api.state import app_state
 from src.audio.features import MFCCExtractor
 from src.domain.commands import ALL_CLASS_NAMES, N_CLASSES
-from src.hardware.arduino_actuator import MockActuator
+from src.domain.exceptions import SerialConnectionError
+from src.domain.interfaces import Actuator
+from src.hardware.arduino_actuator import ArduinoActuator, MockActuator
+from src.hardware.serial_link import SerialLink
 from src.inference.decision import DecisionLayer
 from src.inference.pipeline import InferencePipeline
 from src.inference.predictor import CNNPredictor
@@ -24,6 +28,22 @@ from src.utils.seed import set_global_seed
 logger = get_logger(__name__)
 
 CONFIGS_DIR = Path(__file__).parent.parent.parent / "configs"
+
+
+def _build_actuator() -> Actuator:
+    port = os.environ.get("ARDUINO_PORT")
+    baudrate = int(os.environ.get("ARDUINO_BAUDRATE", "115200"))
+    if not port:
+        logger.warning("ARDUINO_PORT no definido, usando MockActuator")
+        return MockActuator()
+    link = SerialLink(port=port, baudrate=baudrate)
+    try:
+        link.open()
+    except SerialConnectionError as e:
+        logger.warning("No se pudo abrir %s (%s). Usando MockActuator.", port, e)
+        return MockActuator()
+    logger.info("ArduinoActuator activo en %s @ %d", port, baudrate)
+    return ArduinoActuator(link)
 
 
 @asynccontextmanager
@@ -50,7 +70,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         confidence_threshold=inference_cfg.get("confidence_threshold", 0.85),
     )
 
-    actuator = MockActuator()
+    actuator: Actuator = _build_actuator()
     app_state.actuator = actuator
     app_state.models_loaded = True
 

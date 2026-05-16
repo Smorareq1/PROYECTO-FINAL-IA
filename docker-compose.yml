@@ -11,7 +11,7 @@ services:
       - ./backend/models:/app/models
       - ./backend/configs:/app/configs
     environment:
-      - ARDUINO_PORT=/dev/ttyUSB0
+      - ARDUINO_PORT=${ARDUINO_PORT:-/dev/ttyACM0}
       - ARDUINO_BAUDRATE=115200
       - MODEL_CNN_PATH=models/cnn_base/model.pt
       - MODEL_LSTM_PATH=models/bilstm/model.pt
@@ -19,6 +19,10 @@ services:
       - LOG_LEVEL=INFO
       - DASHBOARD_HOST=0.0.0.0
       - DASHBOARD_PORT=8000
+    devices:
+      - "${ARDUINO_PORT:-/dev/ttyACM0}:${ARDUINO_PORT:-/dev/ttyACM0}"
+    group_add:
+      - dialout
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
