@@ -6,7 +6,6 @@ from typing import Optional
 import serial
 import serial.tools.list_ports
 
-from src.domain.commands import HEARTBEAT_BYTE, RESET_BYTE
 from src.domain.exceptions import SerialConnectionError
 from src.utils.logger import get_logger
 
@@ -14,6 +13,12 @@ logger = get_logger(__name__)
 
 
 class SerialLink:
+    """Conexión serial texto/'\\n' a 115200 baudios, compatible con el firmware Arduino.
+
+    Cada comando se envía como una cadena ASCII terminada en '\\n'.
+    El firmware ignora tokens desconocidos y opcionalmente devuelve eco textual.
+    """
+
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 0.1) -> None:
         self._port = port
         self._baudrate = baudrate
@@ -26,6 +31,11 @@ class SerialLink:
                 self._port, self._baudrate, timeout=self._timeout
             )
             time.sleep(2.0)
+            try:
+                self._serial.reset_input_buffer()
+                self._serial.reset_output_buffer()
+            except Exception:
+                pass
             logger.info("Serial port opened: %s @ %d", self._port, self._baudrate)
         except serial.SerialException as e:
             raise SerialConnectionError(f"Cannot open {self._port}: {e}") from e
@@ -39,16 +49,17 @@ class SerialLink:
     def is_open(self) -> bool:
         return self._serial is not None and self._serial.is_open
 
-    def send_byte(self, byte: int) -> None:
-        if not 0 <= byte <= 255:
-            raise ValueError(f"Byte out of range: {byte}")
+    def send_line(self, text: str) -> None:
+        """Envía un token al Arduino terminado en '\\n' (lo que el firmware espera)."""
         if not self.is_open:
             raise SerialConnectionError("Serial port is not open")
         assert self._serial is not None
-        self._serial.write(bytes([byte]))
+        line = text.strip() + "\n"
+        self._serial.write(line.encode("ascii", errors="ignore"))
         self._serial.flush()
 
-    def read_byte(self, timeout: float | None = None) -> int | None:
+    def read_line(self, timeout: float | None = None) -> str | None:
+        """Lee una línea de texto (eco/diagnóstico) del Arduino. None si timeout."""
         if not self.is_open:
             raise SerialConnectionError("Serial port is not open")
         assert self._serial is not None
@@ -56,22 +67,12 @@ class SerialLink:
         if timeout is not None:
             self._serial.timeout = timeout
         try:
-            data = self._serial.read(1)
-            return data[0] if data else None
+            raw = self._serial.readline()
+            if not raw:
+                return None
+            return raw.decode("ascii", errors="replace").strip()
         finally:
             self._serial.timeout = old_timeout
-
-    def heartbeat(self) -> bool:
-        try:
-            self.send_byte(HEARTBEAT_BYTE)
-            response = self.read_byte(timeout=1.0)
-            return response == HEARTBEAT_BYTE
-        except (SerialConnectionError, serial.SerialException):
-            return False
-
-    def reset(self) -> None:
-        self.send_byte(RESET_BYTE)
-        logger.info("Reset command sent to Arduino")
 
 
 def find_arduino_port() -> str | None:

@@ -12,18 +12,21 @@ paths:
   speakers: data/speakers.csv
 
 classes:
-  simple:
+  arduino:
     - enciende
     - apaga
-    - izquierda
-    - derecha
     - detente
+    - rojo
+    - verde
+    - azul
+    - blanco
+    - procesando
+    - rechazo
+    - alarma
+    - tono
+    - off
+  noise:
     - ruido_fondo
-  compound:
-    - enciende_rapido
-    - enciende_lento
-    - gira_izquierda
-    - gira_derecha
 
 splits:
   train: 0.70

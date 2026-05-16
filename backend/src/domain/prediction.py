@@ -24,6 +24,3 @@ class ModelOutput:
     label: Command
     confidence: float
     logits: list[float]
-
-    def is_compound_candidate(self) -> bool:
-        return self.label in (Command.ENCIENDE, Command.GIRA_IZQUIERDA, Command.GIRA_DERECHA)

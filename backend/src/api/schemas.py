@@ -10,7 +10,6 @@ class StatusResponse(BaseModel):
     models_loaded: bool
     pipeline_running: bool
     cnn_model: str
-    lstm_model: str
     uptime_seconds: float
 
 

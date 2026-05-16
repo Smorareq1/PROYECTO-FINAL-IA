@@ -44,7 +44,6 @@ class AppState:
         self.actuator: Actuator | None = None
         self.models_loaded: bool = False
         self.cnn_path: str | None = None
-        self.lstm_path: str | None = None
         self.start_time: float = time.time()
         self.stats = PredictionStats()
 

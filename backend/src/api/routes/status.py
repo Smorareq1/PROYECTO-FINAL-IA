@@ -17,7 +17,6 @@ async def get_status() -> StatusResponse:
         models_loaded=app_state.models_loaded,
         pipeline_running=app_state.pipeline.is_running if app_state.pipeline else False,
         cnn_model=app_state.cnn_path or "not loaded",
-        lstm_model=app_state.lstm_path or "not loaded",
         uptime_seconds=round(time.time() - app_state.start_time, 1),
     )
 

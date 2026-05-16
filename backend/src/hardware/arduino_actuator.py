@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from src.domain.commands import Command
-from src.domain.exceptions import SerialConnectionError
 from src.hardware.serial_link import SerialLink
 from src.utils.logger import get_logger
 
@@ -13,19 +12,23 @@ class ArduinoActuator:
         self._link = link
 
     def execute(self, command: Command) -> None:
-        byte = command.to_protocol_byte()
-        self._link.send_byte(byte)
-        logger.info("Sent command %s (0x%02X) to Arduino", command.value, byte)
+        if not command.is_actuation():
+            logger.debug("Comando %s no se envía al Arduino", command.value)
+            return
+        token = command.to_wire()
+        self._link.send_line(token)
+        logger.info("Sent command %r to Arduino", token)
 
-    def reset(self) -> None:
-        self._link.reset()
+    def stop_all(self) -> None:
+        """Atajo: pone al Arduino en estado seguro (apaga todo y vuelve a escucha)."""
+        self._link.send_line(Command.OFF.to_wire())
 
     def is_connected(self) -> bool:
-        return self._link.heartbeat()
+        return self._link.is_open
 
 
 class MockActuator:
-    """Actuator that logs commands without real hardware. Used for testing and development."""
+    """Actuator que registra comandos sin hardware. Para tests y desarrollo."""
 
     def __init__(self) -> None:
         self._last_command: Command | None = None
@@ -34,11 +37,15 @@ class MockActuator:
     def execute(self, command: Command) -> None:
         self._last_command = command
         self._history.append(command)
-        logger.info("[MOCK] Command executed: %s (0x%02X)", command.value, command.to_protocol_byte())
+        if command.is_actuation():
+            logger.info("[MOCK] Sent command %r", command.value)
+        else:
+            logger.info("[MOCK] Skipping non-actuation command %r", command.value)
 
-    def reset(self) -> None:
-        self._last_command = None
-        logger.info("[MOCK] Reset")
+    def stop_all(self) -> None:
+        self._last_command = Command.OFF
+        self._history.append(Command.OFF)
+        logger.info("[MOCK] stop_all")
 
     def is_connected(self) -> bool:
         return True

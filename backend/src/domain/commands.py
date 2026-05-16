@@ -6,74 +6,38 @@ from enum import Enum
 class Command(Enum):
     ENCIENDE = "enciende"
     APAGA = "apaga"
-    IZQUIERDA = "izquierda"
-    DERECHA = "derecha"
     DETENTE = "detente"
+    ROJO = "rojo"
+    VERDE = "verde"
+    AZUL = "azul"
+    BLANCO = "blanco"
+    PROCESANDO = "procesando"
+    RECHAZO = "rechazo"
+    ALARMA = "alarma"
+    TONO = "tono"
+    OFF = "off"
     RUIDO_FONDO = "ruido_fondo"
 
-    ENCIENDE_RAPIDO = "enciende_rapido"
-    ENCIENDE_LENTO = "enciende_lento"
-    GIRA_IZQUIERDA = "gira_izquierda"
-    GIRA_DERECHA = "gira_derecha"
+    def is_actuation(self) -> bool:
+        """True si el comando se envía al Arduino. RUIDO_FONDO no se envía."""
+        return self is not Command.RUIDO_FONDO
 
-    def is_compound(self) -> bool:
-        return self in _COMPOUND_COMMANDS
-
-    def is_simple(self) -> bool:
-        return self in _SIMPLE_COMMANDS
-
-    def to_protocol_byte(self) -> int:
-        return _COMMAND_TO_BYTE[self]
+    def to_wire(self) -> str:
+        """Token de texto que el firmware espera por Serial (sin '\\n')."""
+        return self.value
 
     @staticmethod
-    def from_protocol_byte(byte: int) -> Command:
+    def from_wire(token: str) -> Command:
         try:
-            return _BYTE_TO_COMMAND[byte]
-        except KeyError:
-            raise ValueError(f"Unknown protocol byte: 0x{byte:02X}")
+            return Command(token.strip().lower())
+        except ValueError as e:
+            raise ValueError(f"Unknown command token: {token!r}") from e
 
     @staticmethod
-    def simple_commands() -> list[Command]:
-        return list(_SIMPLE_COMMANDS)
-
-    @staticmethod
-    def compound_commands() -> list[Command]:
-        return list(_COMPOUND_COMMANDS)
+    def actuation_commands() -> list[Command]:
+        return [c for c in Command if c.is_actuation()]
 
 
-_SIMPLE_COMMANDS: frozenset[Command] = frozenset({
-    Command.ENCIENDE,
-    Command.APAGA,
-    Command.IZQUIERDA,
-    Command.DERECHA,
-    Command.DETENTE,
-    Command.RUIDO_FONDO,
-})
-
-_COMPOUND_COMMANDS: frozenset[Command] = frozenset({
-    Command.ENCIENDE_RAPIDO,
-    Command.ENCIENDE_LENTO,
-    Command.GIRA_IZQUIERDA,
-    Command.GIRA_DERECHA,
-})
-
-_COMMAND_TO_BYTE: dict[Command, int] = {
-    Command.ENCIENDE: 0x01,
-    Command.APAGA: 0x02,
-    Command.IZQUIERDA: 0x03,
-    Command.DERECHA: 0x04,
-    Command.DETENTE: 0x05,
-    Command.ENCIENDE_RAPIDO: 0x10,
-    Command.ENCIENDE_LENTO: 0x11,
-    Command.GIRA_IZQUIERDA: 0x12,
-    Command.GIRA_DERECHA: 0x13,
-}
-
-_BYTE_TO_COMMAND: dict[int, Command] = {v: k for k, v in _COMMAND_TO_BYTE.items()}
-
-HEARTBEAT_BYTE = 0xFE
-RESET_BYTE = 0xFF
-
-SIMPLE_CLASS_NAMES: list[str] = [c.value for c in Command.simple_commands()]
-COMPOUND_CLASS_NAMES: list[str] = [c.value for c in Command.compound_commands()]
+ACTUATION_CLASS_NAMES: list[str] = [c.value for c in Command.actuation_commands()]
 ALL_CLASS_NAMES: list[str] = [c.value for c in Command]
+N_CLASSES: int = len(ALL_CLASS_NAMES)
