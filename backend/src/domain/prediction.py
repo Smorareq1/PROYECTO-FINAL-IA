@@ -24,15 +24,3 @@ class ModelOutput:
     label: Command
     confidence: float
     logits: list[float]
-
-    def is_compound_candidate(self) -> bool:
-        # Comandos cuya forma acústica puede confundirse con un comando compuesto:
-        #   - ENCIENDE puede iniciar "enciende_*" en versiones futuras
-        #   - los compuestos reales son: blanco, procesando, alarma, tono
-        return self.label in (
-            Command.ENCIENDE,
-            Command.BLANCO,
-            Command.PROCESANDO,
-            Command.ALARMA,
-            Command.TONO,
-        )

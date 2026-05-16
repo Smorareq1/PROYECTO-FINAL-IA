@@ -1,0 +1,147 @@
+import processing.serial.*;
+
+Serial arduino;
+
+String puertoSeleccionado = "";
+String estado = "Sin conectar";
+String ultimoComando = "Ninguno";
+
+// Cambia este índice si Processing no agarra tu Arduino.
+// Abajo en consola se imprimen todos los puertos disponibles.
+int indicePuerto = 0;
+
+ArrayList<Boton> botones = new ArrayList<Boton>();
+
+void setup() {
+  size(900, 600);
+  surface.setTitle("Panel de Pruebas - Arduino Voz IA");
+
+  println("Puertos disponibles:");
+  for (int i = 0; i < Serial.list().length; i++) {
+    println(i + ": " + Serial.list()[i]);
+  }
+
+  try {
+    puertoSeleccionado = Serial.list()[indicePuerto];
+    arduino = new Serial(this, puertoSeleccionado, 115200);
+    arduino.clear();
+    estado = "Conectado a: " + puertoSeleccionado;
+  } catch (Exception e) {
+    estado = "Error: no se pudo conectar. Cambia indicePuerto.";
+    println(e);
+  }
+
+  crearBotones();
+}
+
+void draw() {
+  background(30);
+
+  fill(255);
+  textAlign(LEFT, TOP);
+  textSize(26);
+  text("Panel de prueba para Arduino - Proyecto IA", 40, 25);
+
+  textSize(16);
+  fill(200);
+  text("Estado: " + estado, 40, 70);
+  text("Último comando enviado: " + ultimoComando, 40, 95);
+
+  fill(180);
+  text("Haz clic en un botón para enviar el comando por Serial al Arduino.", 40, 125);
+  text("Velocidad serial: 115200 baudios", 40, 150);
+
+  for (Boton b : botones) {
+    b.mostrar();
+  }
+}
+
+void mousePressed() {
+  for (Boton b : botones) {
+    if (b.estaEncima(mouseX, mouseY)) {
+      enviarComando(b.comando);
+    }
+  }
+}
+
+void enviarComando(String comando) {
+  ultimoComando = comando;
+
+  if (arduino != null) {
+    arduino.write(comando + "\n");
+    println("Enviado: " + comando);
+  } else {
+    println("Arduino no conectado. Comando no enviado: " + comando);
+  }
+}
+
+void crearBotones() {
+  int x1 = 40;
+  int x2 = 330;
+  int x3 = 620;
+  int y = 200;
+  int w = 230;
+  int h = 60;
+  int gap = 25;
+
+  botones.add(new Boton(x1, y, w, h, "ENCIENDE", "enciende"));
+  botones.add(new Boton(x2, y, w, h, "APAGA", "apaga"));
+  botones.add(new Boton(x3, y, w, h, "DETENTE", "detente"));
+
+  y += h + gap;
+  botones.add(new Boton(x1, y, w, h, "ROJO", "rojo"));
+  botones.add(new Boton(x2, y, w, h, "VERDE", "verde"));
+  botones.add(new Boton(x3, y, w, h, "AZUL", "azul"));
+
+  y += h + gap;
+  botones.add(new Boton(x1, y, w, h, "RGB BLANCO", "blanco"));
+  botones.add(new Boton(x2, y, w, h, "PROCESANDO", "procesando"));
+  botones.add(new Boton(x3, y, w, h, "RECHAZO", "rechazo"));
+
+  y += h + gap;
+  botones.add(new Boton(x1, y, w, h, "ALARMA", "alarma"));
+  botones.add(new Boton(x2, y, w, h, "TONO COMPUESTO", "tono"));
+  botones.add(new Boton(x3, y, w, h, "TODO OFF", "off"));
+}
+
+class Boton {
+  int x, y, w, h;
+  String texto;
+  String comando;
+
+  Boton(int x, int y, int w, int h, String texto, String comando) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.texto = texto;
+    this.comando = comando;
+  }
+
+  void mostrar() {
+    boolean hover = estaEncima(mouseX, mouseY);
+
+    if (hover) {
+      fill(70, 120, 200);
+    } else {
+      fill(45, 75, 130);
+    }
+
+    stroke(180);
+    strokeWeight(2);
+    rect(x, y, w, h, 12);
+
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(18);
+    text(texto, x + w / 2, y + h / 2 - 7);
+
+    fill(210);
+    textSize(12);
+    text("\"" + comando + "\"", x + w / 2, y + h / 2 + 17);
+  }
+
+  boolean estaEncima(int mx, int my) {
+    return mx >= x && mx <= x + w && my >= y && my <= y + h;
+  }
+}

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.domain.commands import Command, SYSTEM_OFF, SYSTEM_RECHAZO
+from src.domain.commands import Command
 from src.hardware.serial_link import SerialLink
 from src.utils.logger import get_logger
 
@@ -8,55 +8,44 @@ logger = get_logger(__name__)
 
 
 class ArduinoActuator:
-    """Envía comandos al Arduino físico vía serial (protocolo ASCII + '\\n')."""
-
     def __init__(self, link: SerialLink) -> None:
         self._link = link
 
     def execute(self, command: Command) -> None:
-        if command.is_noise():
-            # ruido_fondo no se envía: el modelo lo usa para distinguir voz vs no-voz
-            logger.debug("Skipping send: %s is a noise class", command.value)
+        if not command.is_actuation():
+            logger.debug("Comando %s no se envía al Arduino", command.value)
             return
-        text = command.to_protocol_string()
-        self._link.send_line(text)
-        logger.info("Sent command '%s' to Arduino", text)
+        token = command.to_wire()
+        self._link.send_line(token)
+        logger.info("Sent command %r to Arduino", token)
 
-    def signal_rejected(self) -> None:
-        """Notifica al Arduino que se rechazó una predicción (low confidence)."""
-        self._link.send_line(SYSTEM_RECHAZO)
-        logger.info("Sent system signal '%s' to Arduino", SYSTEM_RECHAZO)
-
-    def reset(self) -> None:
-        """Apaga todo en el Arduino (LED verde de escucha encendido)."""
-        self._link.send_line(SYSTEM_OFF)
-        logger.info("Sent system signal '%s' to Arduino", SYSTEM_OFF)
+    def stop_all(self) -> None:
+        """Atajo: pone al Arduino en estado seguro (apaga todo y vuelve a escucha)."""
+        self._link.send_line(Command.OFF.to_wire())
 
     def is_connected(self) -> bool:
-        return self._link.heartbeat()
+        return self._link.is_open
 
 
 class MockActuator:
-    """Actuador que registra comandos sin hardware. Para tests y desarrollo."""
+    """Actuator que registra comandos sin hardware. Para tests y desarrollo."""
 
     def __init__(self) -> None:
         self._last_command: Command | None = None
         self._history: list[Command] = []
 
     def execute(self, command: Command) -> None:
-        if command.is_noise():
-            logger.debug("[MOCK] Skipping noise class: %s", command.value)
-            return
         self._last_command = command
         self._history.append(command)
-        logger.info("[MOCK] Command executed: '%s'", command.value)
+        if command.is_actuation():
+            logger.info("[MOCK] Sent command %r", command.value)
+        else:
+            logger.info("[MOCK] Skipping non-actuation command %r", command.value)
 
-    def signal_rejected(self) -> None:
-        logger.info("[MOCK] System signal: 'rechazo'")
-
-    def reset(self) -> None:
-        self._last_command = None
-        logger.info("[MOCK] Reset (off)")
+    def stop_all(self) -> None:
+        self._last_command = Command.OFF
+        self._history.append(Command.OFF)
+        logger.info("[MOCK] stop_all")
 
     def is_connected(self) -> bool:
         return True

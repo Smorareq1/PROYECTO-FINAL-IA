@@ -1,77 +1,69 @@
 import pytest
 
-from src.domain.commands import Command, SYSTEM_OFF, SYSTEM_RECHAZO
-from src.hardware.command_protocol import command_to_string, string_to_command, describe
+from src.domain.commands import (
+    ACTUATION_CLASS_NAMES,
+    ALL_CLASS_NAMES,
+    Command,
+    N_CLASSES,
+)
+from src.hardware.command_protocol import command_to_wire, describe
 
 
-def test_all_voice_commands_have_protocol_string():
-    for cmd in Command:
-        if cmd.is_noise():
-            continue
-        text = cmd.to_protocol_string()
-        assert isinstance(text, str) and text == text.lower()
+EXPECTED_ARDUINO_TOKENS = {
+    "enciende",
+    "apaga",
+    "detente",
+    "rojo",
+    "verde",
+    "azul",
+    "blanco",
+    "procesando",
+    "rechazo",
+    "alarma",
+    "tono",
+    "off",
+}
 
 
-def test_roundtrip_string_conversion():
-    for cmd in Command:
-        if cmd.is_noise():
-            continue
-        text = command_to_string(cmd)
-        assert string_to_command(text) is cmd
+def test_actuation_set_matches_arduino_firmware():
+    assert set(ACTUATION_CLASS_NAMES) == EXPECTED_ARDUINO_TOKENS
 
 
-def test_simple_vs_compound():
-    simple = Command.simple_commands()
-    compound = Command.compound_commands()
-    assert len(simple) == 6
-    assert len(compound) == 4
-    assert Command.ENCIENDE in simple
-    assert Command.BLANCO in compound
+def test_ruido_fondo_is_not_actuation():
+    assert Command.RUIDO_FONDO.is_actuation() is False
+    assert "ruido_fondo" not in ACTUATION_CLASS_NAMES
+    assert "ruido_fondo" in ALL_CLASS_NAMES
 
 
-def test_is_compound():
-    assert Command.BLANCO.is_compound() is True
-    assert Command.ALARMA.is_compound() is True
-    assert Command.ENCIENDE.is_compound() is False
-    assert Command.DETENTE.is_compound() is False
+def test_total_class_count_for_model():
+    # 12 comandos para Arduino + ruido_fondo (rechazo)
+    assert N_CLASSES == 13
+    assert len(ALL_CLASS_NAMES) == 13
 
 
-def test_is_simple():
-    assert Command.ENCIENDE.is_simple() is True
-    assert Command.RUIDO_FONDO.is_simple() is False
-    assert Command.BLANCO.is_simple() is False
+def test_to_wire_is_identity_token():
+    for cmd in Command.actuation_commands():
+        assert cmd.to_wire() == cmd.value
+        assert command_to_wire(cmd) == cmd.value
 
 
-def test_protocol_strings_match_arduino_sketch():
-    # Estos strings deben coincidir EXACTAMENTE con los `if (cmd == "...")` del .ino
-    assert Command.ENCIENDE.to_protocol_string() == "enciende"
-    assert Command.APAGA.to_protocol_string() == "apaga"
-    assert Command.DETENTE.to_protocol_string() == "detente"
-    assert Command.ROJO.to_protocol_string() == "rojo"
-    assert Command.VERDE.to_protocol_string() == "verde"
-    assert Command.AZUL.to_protocol_string() == "azul"
-    assert Command.BLANCO.to_protocol_string() == "blanco"
-    assert Command.PROCESANDO.to_protocol_string() == "procesando"
-    assert Command.ALARMA.to_protocol_string() == "alarma"
-    assert Command.TONO.to_protocol_string() == "tono"
+def test_from_wire_roundtrip():
+    for token in EXPECTED_ARDUINO_TOKENS:
+        cmd = Command.from_wire(token)
+        assert cmd.value == token
 
 
-def test_system_signal_constants():
-    assert SYSTEM_OFF == "off"
-    assert SYSTEM_RECHAZO == "rechazo"
+def test_from_wire_is_case_and_space_tolerant():
+    assert Command.from_wire("  ENCIENDE\n") == Command.ENCIENDE
+    assert Command.from_wire("Rojo") == Command.ROJO
 
 
-def test_describe_known_and_unknown():
-    assert "rele" in describe("enciende").lower()
-    assert "rgb" in describe("rojo").lower()
-    assert "Unknown" in describe("xxxxx")
-
-
-def test_from_protocol_string_invalid_raises():
+def test_from_wire_rejects_unknown_token():
     with pytest.raises(ValueError):
-        Command.from_protocol_string("foo")
+        Command.from_wire("zzz_no_existe")
 
 
-def test_from_protocol_string_is_case_insensitive():
-    assert Command.from_protocol_string("ENCIENDE") is Command.ENCIENDE
-    assert Command.from_protocol_string(" Rojo ") is Command.ROJO
+def test_describe_has_entries_for_all_actuation_commands():
+    for cmd in Command.actuation_commands():
+        msg = describe(cmd)
+        assert msg and "sin descripción" not in msg.lower()

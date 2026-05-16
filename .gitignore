@@ -69,3 +69,24 @@ docker-compose.override.yml
 # =====================
 logs/
 *.log
+
+# =====================
+# Audio corpus (linked from README via Drive)
+# =====================
+backend/data/raw/
+backend/data/processed/
+backend/data/augmented/
+backend/data/raw_mock/
+backend/data/manifests/speakers.csv
+*.wav
+*.flac
+*.ogg
+
+# =====================
+# Trained model weights (linked from README)
+# =====================
+backend/models/cnn_base/model.pt
+backend/models/bilstm/model.pt
+*.pt
+*.onnx
+*.tflite

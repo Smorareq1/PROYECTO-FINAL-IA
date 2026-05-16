@@ -1,5 +1,5 @@
 name: BiLSTMSequentialClassifier
-n_classes: 4
+n_classes: 13
 n_mfcc: 13
 
 architecture:
@@ -18,4 +18,4 @@ architecture:
 head:
   dropout: 0.4
   fc1_out: 32
-  fc2_out: 4
+  fc2_out: 13

@@ -2,11 +2,9 @@ serial:
   port: auto
   baudrate: 115200
   timeout: 0.1
-  heartbeat_interval_seconds: 10
 
 inference:
   confidence_threshold: 0.85
-  compound_confidence_threshold: 0.80
   buffer_duration_seconds: 3.0
   chunk_duration_ms: 320
 
