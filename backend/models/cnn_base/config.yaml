@@ -1,0 +1,25 @@
+cnn:
+  batch_size: 32
+  epochs: 60
+  optimizer: adamw
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  scheduler: one_cycle
+  scheduler_max_lr: 1.0e-2
+  loss: cross_entropy_label_smoothing
+  label_smoothing: 0.1
+  early_stopping_patience: 10
+  gradient_clip_norm: 1.0
+  seed: 42
+
+lstm:
+  batch_size: 32
+  epochs: 80
+  optimizer: adamw
+  learning_rate: 5.0e-4
+  weight_decay: 1.0e-4
+  scheduler: cosine_annealing
+  loss: cross_entropy
+  early_stopping_patience: 15
+  gradient_clip_norm: 1.0
+  seed: 42

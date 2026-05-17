@@ -27,6 +27,12 @@ from src.utils.seed import set_global_seed
 
 logger = get_logger(__name__)
 
+# rutas canonicas relativas al archivo (no al cwd)
+BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+DEFAULT_CONFIGS_DIR = BACKEND_ROOT / "configs"
+DEFAULT_DATA_ROOT = BACKEND_ROOT / "data"
+DEFAULT_MODELS_DIR = BACKEND_ROOT / "models"
+
 MODEL_TO_OUTDIR: dict[str, str] = {"cnn": "cnn_base", "bilstm": "bilstm"}
 
 
@@ -49,10 +55,12 @@ def main() -> None:
     parser.add_argument("--split", choices=["val", "test"], default="test")
     parser.add_argument("--weights", default=None)
     parser.add_argument("--output-dir", default=None)
-    parser.add_argument("--data-config", default="backend/configs/data.yaml")
-    parser.add_argument("--preprocessing-config", default="backend/configs/preprocessing.yaml")
-    parser.add_argument("--splits-dir", default="backend/data/splits")
-    parser.add_argument("--data-root", default="backend")
+    parser.add_argument("--data-config", default=str(DEFAULT_CONFIGS_DIR / "data.yaml"))
+    parser.add_argument(
+        "--preprocessing-config", default=str(DEFAULT_CONFIGS_DIR / "preprocessing.yaml")
+    )
+    parser.add_argument("--splits-dir", default=str(DEFAULT_DATA_ROOT / "splits"))
+    parser.add_argument("--data-root", default=str(DEFAULT_DATA_ROOT))
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--tta", action="store_true", help="Test-Time Augmentation (3 SpecAugment passes)")
@@ -63,7 +71,7 @@ def main() -> None:
     data_cfg = load_yaml(args.data_config)
     prep_cfg = load_yaml(args.preprocessing_config)
 
-    out_dir = Path(args.output_dir or f"backend/models/{MODEL_TO_OUTDIR[args.model]}")
+    out_dir = Path(args.output_dir or DEFAULT_MODELS_DIR / MODEL_TO_OUTDIR[args.model])
     weights = Path(args.weights or out_dir / "model.pt")
     if not weights.exists():
         raise FileNotFoundError(f"Weights not found: {weights}")

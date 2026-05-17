@@ -29,6 +29,10 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# data root canonico, relativo al archivo del script (backend/data/), no al cwd
+BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+DEFAULT_DATA_ROOT = BACKEND_ROOT / "data"
+
 CLASSES_ARDUINO: list[str] = [
     "enciende",
     "apaga",
@@ -174,7 +178,11 @@ def main() -> None:
     )
     parser.add_argument("--repeats", type=int, default=15, help="Repeticiones por clase.")
     parser.add_argument("--shuffle", action="store_true", help="Aleatoriza el orden de las clases.")
-    parser.add_argument("--data-root", default="backend/data", help="Raiz del corpus.")
+    parser.add_argument(
+        "--data-root",
+        default=str(DEFAULT_DATA_ROOT),
+        help=f"Raiz del corpus. Default: {DEFAULT_DATA_ROOT}",
+    )
     parser.add_argument(
         "--language",
         default="es",
