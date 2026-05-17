@@ -33,6 +33,12 @@ from src.utils.seed import set_global_seed
 
 logger = get_logger(__name__)
 
+# rutas canonicas relativas al archivo (no al cwd)
+BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+DEFAULT_CONFIGS_DIR = BACKEND_ROOT / "configs"
+DEFAULT_DATA_ROOT = BACKEND_ROOT / "data"
+DEFAULT_MODELS_DIR = BACKEND_ROOT / "models"
+
 ModelName = Literal["cnn", "bilstm"]
 
 MODEL_TO_OUTDIR: dict[str, str] = {"cnn": "cnn_base", "bilstm": "bilstm"}
@@ -95,12 +101,18 @@ def _spec_augment_kwargs_from_cfg(prep_cfg: dict) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--model", choices=["cnn", "bilstm"], required=True)
-    parser.add_argument("--config", default="backend/configs/training.yaml")
-    parser.add_argument("--data-config", default="backend/configs/data.yaml")
-    parser.add_argument("--preprocessing-config", default="backend/configs/preprocessing.yaml")
-    parser.add_argument("--splits-dir", default="backend/data/splits")
-    parser.add_argument("--data-root", default="backend")
-    parser.add_argument("--output-dir", default="backend/models")
+    parser.add_argument("--config", default=str(DEFAULT_CONFIGS_DIR / "training.yaml"))
+    parser.add_argument("--data-config", default=str(DEFAULT_CONFIGS_DIR / "data.yaml"))
+    parser.add_argument(
+        "--preprocessing-config", default=str(DEFAULT_CONFIGS_DIR / "preprocessing.yaml")
+    )
+    parser.add_argument("--splits-dir", default=str(DEFAULT_DATA_ROOT / "splits"))
+    parser.add_argument(
+        "--data-root",
+        default=str(DEFAULT_DATA_ROOT),
+        help=f"Raiz del corpus (donde estan raw/, augmented/...). Default: {DEFAULT_DATA_ROOT}",
+    )
+    parser.add_argument("--output-dir", default=str(DEFAULT_MODELS_DIR))
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -130,8 +142,10 @@ def main() -> None:
     extractor = MFCCExtractor.from_config(prep_cfg)
     data_root = Path(args.data_root)
     splits_dir = Path(args.splits_dir)
+    # paths.augmented en data.yaml viene como "data/augmented" (project-rooted);
+    # como data_root ya es backend/data, solo tomamos el ultimo segmento.
     augmented_relpath = (data_cfg.get("paths", {}) or {}).get("augmented", "data/augmented")
-    augmented_dir = data_root / augmented_relpath
+    augmented_dir = data_root / Path(augmented_relpath).name
 
     spec_kwargs = _spec_augment_kwargs_from_cfg(prep_cfg)
 

@@ -23,6 +23,11 @@ from pathlib import Path
 
 from src.utils.logger import get_logger
 
+# rutas canonicas relativas al archivo (no al cwd)
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_MANIFEST = BACKEND_ROOT / "data" / "manifests" / "corpus.csv"
+DEFAULT_SPLITS_DIR = BACKEND_ROOT / "data" / "splits"
+
 logger = get_logger(__name__)
 
 
@@ -44,8 +49,8 @@ def write_manifest(path: Path, fieldnames: list[str], rows: list[dict]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--manifest", default="backend/data/manifests/corpus.csv")
-    parser.add_argument("--splits-dir", default="backend/data/splits")
+    parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    parser.add_argument("--splits-dir", default=str(DEFAULT_SPLITS_DIR))
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--test-speakers", type=int, default=2)
     parser.add_argument("--val-frac", type=float, default=0.15)
@@ -64,37 +69,67 @@ def main() -> None:
 
     rng = random.Random(args.seed)
 
-    # 1) Elegir hablantes held-out (excluyendo ruido_fondo).
     voice_rows = [r for r in rows if r.get("class") != "ruido_fondo"]
     speakers = sorted({r.get("speaker_id", "") for r in voice_rows if r.get("speaker_id")})
-    if len(speakers) <= args.test_speakers:
-        logger.warning(
-            "Solo %d hablantes; necesitan >%d para held-out. Asignando un solo speaker.",
-            len(speakers), args.test_speakers,
+
+    if args.test_speakers <= 0:
+        # Modo split aleatorio estratificado: cada (speaker, class) se reparte 70/15/15 por clip.
+        # Apropiado cuando N_speakers es muy bajo (<=3) y el held-out por hablante seria inestable.
+        logger.info(
+            "Modo split aleatorio estratificado por clip (sin held-out de hablante). "
+            "test_frac = 1 - 0.70 - val_frac = %.2f",
+            max(0.0, 1.0 - 0.70 - args.val_frac),
         )
-        held_out_speakers = set(speakers[: max(0, len(speakers) - 1)])
-    else:
-        shuffled = speakers[:]
-        rng.shuffle(shuffled)
-        held_out_speakers = set(shuffled[: args.test_speakers])
-    logger.info("Hablantes held-out (test): %s", sorted(held_out_speakers))
-
-    # 2) Asignar split.
-    by_speaker_class: dict[tuple[str, str], list[dict]] = defaultdict(list)
-    for r in voice_rows:
-        spk = r.get("speaker_id", "")
-        cls = r.get("class", "")
-        if spk in held_out_speakers:
-            r["split"] = "test"
-        else:
+        held_out_speakers: set[str] = set()
+        by_speaker_class: dict[tuple[str, str], list[dict]] = defaultdict(list)
+        for r in voice_rows:
+            spk = r.get("speaker_id", "")
+            cls = r.get("class", "")
             by_speaker_class[(spk, cls)].append(r)
-            r["split"] = ""
 
-    for (spk, cls), group in by_speaker_class.items():
-        rng.shuffle(group)
-        n_val = max(1, int(round(len(group) * args.val_frac)))
-        for i, r in enumerate(group):
-            r["split"] = "val" if i < n_val else "train"
+        test_frac = max(0.05, 1.0 - 0.70 - args.val_frac)
+        val_frac = args.val_frac
+        for (spk, cls), group in by_speaker_class.items():
+            rng.shuffle(group)
+            n = len(group)
+            n_test = max(1, int(round(n * test_frac)))
+            n_val = max(1, int(round(n * val_frac)))
+            for i, r in enumerate(group):
+                if i < n_test:
+                    r["split"] = "test"
+                elif i < n_test + n_val:
+                    r["split"] = "val"
+                else:
+                    r["split"] = "train"
+    else:
+        # Modo speaker-disjoint: 1+ hablantes completos held-out para test.
+        if len(speakers) <= args.test_speakers:
+            logger.warning(
+                "Solo %d hablantes; necesitan >%d para held-out. Asignando un solo speaker.",
+                len(speakers), args.test_speakers,
+            )
+            held_out_speakers = set(speakers[: max(0, len(speakers) - 1)])
+        else:
+            shuffled = speakers[:]
+            rng.shuffle(shuffled)
+            held_out_speakers = set(shuffled[: args.test_speakers])
+        logger.info("Hablantes held-out (test): %s", sorted(held_out_speakers))
+
+        by_speaker_class: dict[tuple[str, str], list[dict]] = defaultdict(list)
+        for r in voice_rows:
+            spk = r.get("speaker_id", "")
+            cls = r.get("class", "")
+            if spk in held_out_speakers:
+                r["split"] = "test"
+            else:
+                by_speaker_class[(spk, cls)].append(r)
+                r["split"] = ""
+
+        for (spk, cls), group in by_speaker_class.items():
+            rng.shuffle(group)
+            n_val = max(1, int(round(len(group) * args.val_frac)))
+            for i, r in enumerate(group):
+                r["split"] = "val" if i < n_val else "train"
 
     # 3) ruido_fondo: split aleatorio 70/15/15.
     noise_rows = [r for r in rows if r.get("class") == "ruido_fondo"]

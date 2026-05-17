@@ -32,6 +32,11 @@ from src.audio.augmentation import (
 from src.utils.config_loader import load_yaml
 from src.utils.logger import get_logger
 
+# rutas canonicas relativas al archivo (no al cwd)
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_DATA_ROOT = BACKEND_ROOT / "data"
+DEFAULT_PREPROC_CFG = BACKEND_ROOT / "configs" / "preprocessing.yaml"
+
 logger = get_logger(__name__)
 
 DEFAULT_SR = 16_000
@@ -89,7 +94,7 @@ def apply_random_transforms(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--data-root", default="backend/data", help="Raiz del corpus")
+    parser.add_argument("--data-root", default=str(DEFAULT_DATA_ROOT), help="Raiz del corpus")
     parser.add_argument("--input-dir", default=None, help="Override: directorio de entrada (default raw/)")
     parser.add_argument("--output-dir", default=None, help="Override: directorio de salida (default augmented/)")
     parser.add_argument("--manifest", default=None, help="CSV manifest; si se da, ignora --input-dir.")
@@ -98,7 +103,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
         "--preproc-config",
-        default="backend/configs/preprocessing.yaml",
+        default=str(DEFAULT_PREPROC_CFG),
         help="YAML con seccion augmentation.",
     )
     args = parser.parse_args()
