@@ -15,12 +15,19 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // BACKEND_URL puede apuntar al backend nativo en el host:
+      //   - docker compose (frontend en docker, backend nativo): http://host.docker.internal:8000
+      //   - todo nativo:                                           http://localhost:8000
+      //   - todo en docker:                                        http://backend:8000
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.BACKEND_URL ?? 'http://host.docker.internal:8000',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: (process.env.BACKEND_URL ?? 'http://host.docker.internal:8000').replace(
+          /^http/,
+          'ws',
+        ),
         ws: true,
       },
     },

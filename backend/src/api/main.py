@@ -1,21 +1,29 @@
 from __future__ import annotations
 
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import inference, manual, status
+# Carga backend/.env (raíz del paquete backend, dos niveles arriba de este archivo)
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env", override=False)
+
+from src.api.routes import inference, listening, manual, status
 from src.api.state import app_state
 from src.audio.features import MFCCExtractor
-from src.domain.commands import SIMPLE_CLASS_NAMES, COMPOUND_CLASS_NAMES
-from src.hardware.arduino_actuator import MockActuator
+from src.domain.commands import ALL_CLASS_NAMES, N_CLASSES
+from src.domain.exceptions import SerialConnectionError
+from src.domain.interfaces import Actuator
+from src.hardware.arduino_actuator import ArduinoActuator, MockActuator
+from src.hardware.serial_link import SerialLink, find_arduino_port
 from src.inference.decision import DecisionLayer
 from src.inference.pipeline import InferencePipeline
-from src.inference.predictor import CNNPredictor, BiLSTMPredictor
+from src.inference.predictor import CNNPredictor
 from src.models.factory import create_model
 from src.utils.config_loader import load_yaml
 from src.utils.logger import get_logger
@@ -24,6 +32,27 @@ from src.utils.seed import set_global_seed
 logger = get_logger(__name__)
 
 CONFIGS_DIR = Path(__file__).parent.parent.parent / "configs"
+
+
+def _build_actuator() -> Actuator:
+    port = os.environ.get("ARDUINO_PORT")
+    baudrate = int(os.environ.get("ARDUINO_BAUDRATE", "115200"))
+    if not port:
+        detected = find_arduino_port()
+        if detected:
+            logger.info("ARDUINO_PORT no definido; autodetectado en %s", detected)
+            port = detected
+        else:
+            logger.warning("ARDUINO_PORT no definido y no se detectó; usando MockActuator")
+            return MockActuator()
+    link = SerialLink(port=port, baudrate=baudrate)
+    try:
+        link.open()
+    except SerialConnectionError as e:
+        logger.warning("No se pudo abrir %s (%s). Usando MockActuator.", port, e)
+        return MockActuator()
+    logger.info("ArduinoActuator activo en %s @ %d", port, baudrate)
+    return ArduinoActuator(link)
 
 
 @asynccontextmanager
@@ -36,35 +65,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     extractor = MFCCExtractor.from_config(preproc_cfg)
 
-    cnn_model = create_model("cnn", n_classes=6, n_mfcc=13)
-    lstm_model = create_model("bilstm", n_classes=4, n_mfcc=13)
+    cnn_model = create_model("cnn", n_classes=N_CLASSES, n_mfcc=13)
 
     cnn_path = Path("models/cnn_base/model.pt")
-    lstm_path = Path("models/bilstm/model.pt")
     if cnn_path.exists():
         cnn_model.load(cnn_path)
         app_state.cnn_path = str(cnn_path)
-    if lstm_path.exists():
-        lstm_model.load(lstm_path)
-        app_state.lstm_path = str(lstm_path)
 
-    cnn_predictor = CNNPredictor(cnn_model, SIMPLE_CLASS_NAMES)
-    lstm_predictor = BiLSTMPredictor(lstm_model, COMPOUND_CLASS_NAMES)
+    cnn_predictor = CNNPredictor(cnn_model, ALL_CLASS_NAMES)
 
     inference_cfg = runtime_cfg.get("inference", {})
     decision = DecisionLayer(
         confidence_threshold=inference_cfg.get("confidence_threshold", 0.85),
-        compound_confidence_threshold=inference_cfg.get("compound_confidence_threshold", 0.80),
     )
 
-    actuator = MockActuator()
+    actuator: Actuator = _build_actuator()
     app_state.actuator = actuator
     app_state.models_loaded = True
 
     pipeline = InferencePipeline(
         feature_extractor=extractor,
         cnn_predictor=cnn_predictor,
-        lstm_predictor=lstm_predictor,
         decision=decision,
         actuator=actuator,
         broadcaster=app_state.ws_manager,
@@ -72,8 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     app_state.pipeline = pipeline
 
-    logger.info("Application started. CNN: %d params, BiLSTM: %d params",
-                cnn_model.count_parameters(), lstm_model.count_parameters())
+    logger.info("Application started. CNN: %d params", cnn_model.count_parameters())
 
     yield
 
@@ -99,3 +119,4 @@ app.add_middleware(
 app.include_router(status.router)
 app.include_router(inference.router)
 app.include_router(manual.router)
+app.include_router(listening.router)

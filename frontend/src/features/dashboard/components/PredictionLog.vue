@@ -9,34 +9,60 @@ import { formatConfidence, formatLatency, formatCommandLabel } from '@core/utils
 
 const { log } = storeToRefs(useDashboardStore())
 
-const filter = ref<'all' | 'accepted' | 'rejected' | 'manual'>('all')
+const filter = ref<'all' | 'accepted' | 'rejected' | 'manual' | 'system'>('all')
 
 const visibleLog = computed(() => {
-  if (filter.value === 'all')      return log.value
-  if (filter.value === 'accepted') return log.value.filter(e => !e.rejected)
-  if (filter.value === 'rejected') return log.value.filter(e =>  e.rejected)
-  if (filter.value === 'manual')   return log.value.filter(e =>  e.manual)
-  return log.value
+  const items = log.value
+  if (filter.value === 'all')      return items
+  if (filter.value === 'system')   return items.filter(e => e.kind === 'system')
+  if (filter.value === 'accepted') return items.filter(e => e.kind === 'prediction' && !e.rejected)
+  if (filter.value === 'rejected') return items.filter(e => e.kind === 'prediction' &&  e.rejected)
+  if (filter.value === 'manual')   return items.filter(e => e.kind === 'prediction' &&  e.manual)
+  return items
 })
 
 function commandColor(cmd: string, rejected: boolean): string {
   if (rejected) return colors.danger.default
   return colors.command[cmd as CommandColor] ?? colors.text.secondary
 }
+
+const SYSTEM_EVENT_LABEL: Record<string, string> = {
+  mic_start: 'Mic ON',
+  mic_stop: 'Mic OFF',
+  mic_chunks: 'Front → audio',
+  audio_ws_open: 'WS audio ↑',
+  audio_ws_close: 'WS audio ↓',
+  audio_recv: 'Back ← audio',
+  vad_trigger: 'VAD disparó',
+  error: 'Error',
+}
+
+function systemDotClass(ev: string): string {
+  if (ev === 'vad_trigger') return 'is-vad'
+  if (ev === 'error' || ev.endsWith('_close')) return 'is-bad'
+  if (ev === 'mic_chunks' || ev === 'audio_recv') return 'is-flow'
+  return 'is-ok'
+}
 </script>
 
 <template>
-  <BaseCard eyebrow="Bitacora" title="Log de predicciones" padding="none">
+  <BaseCard eyebrow="Bitacora" title="Eventos y predicciones" padding="none">
     <template #actions>
       <div class="filters" role="tablist">
         <button
-          v-for="opt in (['all','accepted','rejected','manual'] as const)"
+          v-for="opt in (['all','accepted','rejected','manual','system'] as const)"
           :key="opt"
           class="filters__btn"
           :class="{ 'filters__btn--active': filter === opt }"
           @click="filter = opt"
         >
-          {{ opt === 'all' ? 'Todos' : opt === 'accepted' ? 'Aceptados' : opt === 'rejected' ? 'Rechazados' : 'Manuales' }}
+          {{
+            opt === 'all' ? 'Todos'
+            : opt === 'accepted' ? 'Aceptados'
+            : opt === 'rejected' ? 'Rechazados'
+            : opt === 'manual' ? 'Manuales'
+            : 'Sistema'
+          }}
         </button>
       </div>
     </template>
@@ -44,36 +70,53 @@ function commandColor(cmd: string, rejected: boolean): string {
     <div class="log">
       <div class="log__head">
         <span>Hora</span>
-        <span>Comando</span>
+        <span>Evento</span>
         <span>Confianza</span>
         <span>Latencia</span>
-        <span>Estado</span>
+        <span>Origen</span>
       </div>
 
       <div class="log__scroll">
-        <div
-          v-for="(entry, i) in visibleLog"
-          :key="i"
-          class="log__row"
-          :class="{ 'log__row--rejected': entry.rejected, 'log__row--manual': entry.manual }"
-        >
-          <span class="log__time tnum">{{ entry.timestamp }}</span>
-          <span class="log__cmd">
-            <span class="log__cmd-chip" :style="{ background: commandColor(entry.command, entry.rejected) }" />
-            <span class="log__cmd-label">{{ formatCommandLabel(entry.command) }}</span>
-            <span v-if="entry.manual" class="log__tag">Manual</span>
-          </span>
-          <span class="log__conf tnum">{{ formatConfidence(entry.confidence) }}</span>
-          <span class="log__lat tnum">{{ formatLatency(entry.latency_ms) }}</span>
-          <span class="log__status">
-            <span class="log__status-dot" :class="entry.rejected ? 'is-bad' : 'is-ok'" />
-            {{ entry.rejected ? 'Rechazado' : 'OK' }}
-          </span>
-        </div>
+        <template v-for="(entry, i) in visibleLog" :key="i">
+          <div
+            v-if="entry.kind === 'prediction'"
+            class="log__row"
+            :class="{ 'log__row--rejected': entry.rejected, 'log__row--manual': entry.manual }"
+          >
+            <span class="log__time tnum">{{ entry.timestamp }}</span>
+            <span class="log__cmd">
+              <span class="log__cmd-chip" :style="{ background: commandColor(entry.command, entry.rejected) }" />
+              <span class="log__cmd-label">{{ formatCommandLabel(entry.command) }}</span>
+              <span v-if="entry.manual" class="log__tag">Manual</span>
+            </span>
+            <span class="log__conf tnum">{{ formatConfidence(entry.confidence) }}</span>
+            <span class="log__lat tnum">{{ formatLatency(entry.latency_ms) }}</span>
+            <span class="log__status">
+              <span class="log__status-dot" :class="entry.rejected ? 'is-bad' : 'is-ok'" />
+              {{ entry.rejected ? 'Rechazado' : 'OK' }}
+            </span>
+          </div>
+
+          <div v-else class="log__row log__row--system">
+            <span class="log__time tnum">{{ entry.timestamp }}</span>
+            <span class="log__sys">
+              <span class="log__cmd-chip" :class="`dot--${systemDotClass(entry.event)}`" />
+              <span class="log__sys-tag">{{ SYSTEM_EVENT_LABEL[entry.event] ?? entry.event }}</span>
+              <span class="log__sys-msg">{{ entry.message }}</span>
+            </span>
+            <span class="log__conf log__sys-dim">—</span>
+            <span class="log__lat log__sys-dim">—</span>
+            <span class="log__status">
+              <span class="log__origin-pill" :class="`origin--${entry.origin}`">
+                {{ entry.origin === 'front' ? 'FRONT' : 'BACK' }}
+              </span>
+            </span>
+          </div>
+        </template>
 
         <div v-if="visibleLog.length === 0" class="log__empty">
           <span class="eyebrow">Sin registros</span>
-          <p>Aun no hay predicciones para este filtro.</p>
+          <p>Aun no hay eventos para este filtro.</p>
         </div>
       </div>
     </div>
@@ -169,6 +212,53 @@ function commandColor(cmd: string, rejected: boolean): string {
 .log__status-dot { width: 6px; height: 6px; border-radius: 50%; }
 .log__status-dot.is-ok  { background: var(--color-success); }
 .log__status-dot.is-bad { background: var(--color-danger); }
+
+.log__row--system { color: var(--color-text-secondary); }
+.log__sys {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.log__sys-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.log__sys-msg {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log__sys-dim { color: var(--color-text-muted); opacity: 0.5; }
+
+.log__cmd-chip.dot--is-ok   { background: var(--color-success); }
+.log__cmd-chip.dot--is-bad  { background: var(--color-danger); }
+.log__cmd-chip.dot--is-vad  { background: var(--color-info, #4f8cff); }
+.log__cmd-chip.dot--is-flow { background: var(--color-text-muted); }
+
+.log__origin-pill {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  border: 1px solid var(--color-border);
+}
+.log__origin-pill.origin--front {
+  color: var(--color-info, #4f8cff);
+  border-color: var(--color-info, #4f8cff);
+}
+.log__origin-pill.origin--back {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
 
 .log__empty {
   padding: 3rem 1.5rem;

@@ -6,6 +6,9 @@ export const useSystemStore = defineStore('system', () => {
   const arduinoConnected = ref(false)
   const modelsLoaded = ref(false)
   const pipelineRunning = ref(false)
+  const isListening = ref(false)
+  const micDevice = ref<number | null>(null)
+  const micDeviceName = ref<string | null>(null)
   const wsConnected = ref(false)
   const uptimeSeconds = ref(0)
   const cnnModel = ref('')
@@ -17,6 +20,9 @@ export const useSystemStore = defineStore('system', () => {
       arduinoConnected.value = data.arduino_connected
       modelsLoaded.value = data.models_loaded
       pipelineRunning.value = data.pipeline_running
+      isListening.value = data.is_listening
+      micDevice.value = data.mic_device
+      micDeviceName.value = data.mic_device_name
       uptimeSeconds.value = data.uptime_seconds
       cnnModel.value = data.cnn_model
       lstmModel.value = data.lstm_model
@@ -33,6 +39,9 @@ export const useSystemStore = defineStore('system', () => {
     arduinoConnected,
     modelsLoaded,
     pipelineRunning,
+    isListening,
+    micDevice,
+    micDeviceName,
     wsConnected,
     uptimeSeconds,
     cnnModel,

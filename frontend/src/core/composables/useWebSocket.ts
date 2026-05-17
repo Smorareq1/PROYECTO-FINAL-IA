@@ -1,12 +1,12 @@
 import { onMounted, onUnmounted } from 'vue'
 import { createWsClient, type WsClient } from '@core/api/wsClient'
-import type { InferenceEvent } from '@core/types/inference'
+import type { IncomingWsMessage } from '@core/types/inference'
 
-let sharedClient: WsClient<InferenceEvent> | null = null
+let sharedClient: WsClient<IncomingWsMessage> | null = null
 
 export function useInferenceWs() {
   if (!sharedClient) {
-    sharedClient = createWsClient<InferenceEvent>('/ws/inference')
+    sharedClient = createWsClient<IncomingWsMessage>('/ws/inference')
   }
 
   onMounted(() => {

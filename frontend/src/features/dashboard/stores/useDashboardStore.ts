@@ -1,12 +1,24 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { InferenceEvent } from '@core/types/inference'
+import type { InferenceEvent, SystemEventKind } from '@core/types/inference'
 import { ALL_COMMANDS } from '@core/types/commands'
 import { MAX_LOG_ENTRIES, MAX_LATENCY_POINTS } from '@core/utils/constants'
 
-export interface LogEntry extends InferenceEvent {
+interface PredictionLogEntry extends InferenceEvent {
+  kind: 'prediction'
   timestamp: string
 }
+
+interface SystemLogEntry {
+  kind: 'system'
+  timestamp: string
+  event: SystemEventKind
+  origin: 'front' | 'back'
+  message: string
+  detail?: Record<string, unknown>
+}
+
+export type LogEntry = PredictionLogEntry | SystemLogEntry
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const lastEvent = ref<InferenceEvent | null>(null)
@@ -22,6 +34,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (latencies.value.length === 0) return 0
     return latencies.value.reduce((a, b) => a + b, 0) / latencies.value.length
   })
+
+  function _nowStamp(): string {
+    return new Date().toLocaleTimeString('es-GT', {
+      hour12: false,
+      fractionalSecondDigits: 3,
+    })
+  }
+
+  function _pushLog(entry: LogEntry) {
+    log.value.unshift(entry)
+    if (log.value.length > MAX_LOG_ENTRIES) log.value.pop()
+  }
 
   function recordEvent(event: InferenceEvent) {
     lastEvent.value = event
@@ -40,12 +64,27 @@ export const useDashboardStore = defineStore('dashboard', () => {
     latencyLabels.value.push(timeLabel)
     if (latencyLabels.value.length > MAX_LATENCY_POINTS) latencyLabels.value.shift()
 
-    const entry: LogEntry = {
+    _pushLog({
+      kind: 'prediction',
       ...event,
-      timestamp: now.toLocaleTimeString('es-GT', { hour12: false, fractionalSecondDigits: 3 }),
-    }
-    log.value.unshift(entry)
-    if (log.value.length > MAX_LOG_ENTRIES) log.value.pop()
+      timestamp: _nowStamp(),
+    })
+  }
+
+  function recordSystem(
+    event: SystemEventKind,
+    origin: 'front' | 'back',
+    message: string,
+    detail?: Record<string, unknown>,
+  ) {
+    _pushLog({
+      kind: 'system',
+      timestamp: _nowStamp(),
+      event,
+      origin,
+      message,
+      detail,
+    })
   }
 
   function getCountForCommands(): number[] {
@@ -62,6 +101,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     acceptedPredictions,
     avgLatency,
     recordEvent,
+    recordSystem,
     getCountForCommands,
   }
 })

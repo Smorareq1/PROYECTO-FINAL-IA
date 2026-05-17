@@ -9,9 +9,17 @@ class StatusResponse(BaseModel):
     arduino_connected: bool
     models_loaded: bool
     pipeline_running: bool
+    is_listening: bool
+    mic_device: int | None = None
+    mic_device_name: str | None = None
     cnn_model: str
-    lstm_model: str
     uptime_seconds: float
+
+
+class ListeningStateResponse(BaseModel):
+    is_listening: bool
+    device: int | None = None
+    device_name: str | None = None
 
 
 class InferenceEvent(BaseModel):

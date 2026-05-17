@@ -2,9 +2,18 @@ export interface StatusResponse {
   arduino_connected: boolean
   models_loaded: boolean
   pipeline_running: boolean
+  is_listening: boolean
+  mic_device: number | null
+  mic_device_name: string | null
   cnn_model: string
   lstm_model: string
   uptime_seconds: number
+}
+
+export interface ListeningStateResponse {
+  is_listening: boolean
+  device: number | null
+  device_name: string | null
 }
 
 export interface HealthResponse {

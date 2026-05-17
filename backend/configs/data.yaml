@@ -11,22 +11,22 @@ paths:
   splits: data/splits
   speakers: data/speakers.csv
 
-# Clases del modelo. Coinciden con los strings que el sketch Arduino acepta
-# (excepto ruido_fondo, que es la clase de rechazo del modelo).
 classes:
-  simple:
+  arduino:
     - enciende
     - apaga
     - detente
     - rojo
     - verde
     - azul
-    - ruido_fondo
-  compound:
     - blanco
     - procesando
+    - rechazo
     - alarma
     - tono
+    - off
+  noise:
+    - ruido_fondo
 
 splits:
   train: 0.70
