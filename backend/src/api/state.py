@@ -5,6 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 
 from src.api.websocket import ConnectionManager
+from src.audio.live_runner import LiveAudioRunner
 from src.domain.interfaces import Actuator
 from src.inference.pipeline import InferencePipeline
 
@@ -46,6 +47,8 @@ class AppState:
         self.cnn_path: str | None = None
         self.start_time: float = time.time()
         self.stats = PredictionStats()
+        self.is_listening: bool = False
+        self.live_runner: LiveAudioRunner | None = None
 
 
 app_state = AppState()

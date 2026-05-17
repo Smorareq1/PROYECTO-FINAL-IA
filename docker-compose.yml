@@ -1,5 +1,9 @@
 services:
+  # El backend ahora corre NATIVO en el host (necesita acceso al micrófono).
+  # Este servicio sigue acá solo para CI o si se quiere dockerizar luego.
+  # Usa `docker compose --profile docker-backend up` para levantarlo.
   backend:
+    profiles: ["docker-backend"]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -49,8 +53,8 @@ services:
       - ./frontend/tsconfig.node.json:/app/tsconfig.node.json
     environment:
       - VITE_API_URL=http://localhost:8000
+      - BACKEND_URL=http://host.docker.internal:8000
       - CHOKIDAR_USEPOLLING=true
-    depends_on:
-      backend:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped

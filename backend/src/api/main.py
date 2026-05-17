@@ -6,17 +6,21 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import inference, manual, status
+# Carga backend/.env (raíz del paquete backend, dos niveles arriba de este archivo)
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env", override=False)
+
+from src.api.routes import inference, listening, manual, status
 from src.api.state import app_state
 from src.audio.features import MFCCExtractor
 from src.domain.commands import ALL_CLASS_NAMES, N_CLASSES
 from src.domain.exceptions import SerialConnectionError
 from src.domain.interfaces import Actuator
 from src.hardware.arduino_actuator import ArduinoActuator, MockActuator
-from src.hardware.serial_link import SerialLink
+from src.hardware.serial_link import SerialLink, find_arduino_port
 from src.inference.decision import DecisionLayer
 from src.inference.pipeline import InferencePipeline
 from src.inference.predictor import CNNPredictor
@@ -34,8 +38,13 @@ def _build_actuator() -> Actuator:
     port = os.environ.get("ARDUINO_PORT")
     baudrate = int(os.environ.get("ARDUINO_BAUDRATE", "115200"))
     if not port:
-        logger.warning("ARDUINO_PORT no definido, usando MockActuator")
-        return MockActuator()
+        detected = find_arduino_port()
+        if detected:
+            logger.info("ARDUINO_PORT no definido; autodetectado en %s", detected)
+            port = detected
+        else:
+            logger.warning("ARDUINO_PORT no definido y no se detectó; usando MockActuator")
+            return MockActuator()
     link = SerialLink(port=port, baudrate=baudrate)
     try:
         link.open()
@@ -110,3 +119,4 @@ app.add_middleware(
 app.include_router(status.router)
 app.include_router(inference.router)
 app.include_router(manual.router)
+app.include_router(listening.router)

@@ -58,6 +58,9 @@ class InferencePipeline:
     def push_audio(self, chunk: np.ndarray) -> None:
         self._buffer.push(chunk)
 
+    def clear_buffer(self) -> None:
+        self._buffer.clear()
+
     def set_noise_profile(self, ambient_audio: np.ndarray) -> None:
         """Guarda una muestra ambiental para alimentar a noisereduce."""
         if ambient_audio.size == 0:

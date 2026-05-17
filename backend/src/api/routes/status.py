@@ -12,10 +12,14 @@ router = APIRouter()
 
 @router.get("/api/status", response_model=StatusResponse)
 async def get_status() -> StatusResponse:
+    runner = app_state.live_runner
     return StatusResponse(
         arduino_connected=app_state.actuator.is_connected() if app_state.actuator else False,
         models_loaded=app_state.models_loaded,
         pipeline_running=app_state.pipeline.is_running if app_state.pipeline else False,
+        is_listening=app_state.is_listening,
+        mic_device=runner._current_device if runner else None,
+        mic_device_name=runner.current_device_name if runner else None,
         cnn_model=app_state.cnn_path or "not loaded",
         uptime_seconds=round(time.time() - app_state.start_time, 1),
     )
