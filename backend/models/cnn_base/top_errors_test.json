@@ -1,0 +1,20 @@
+[
+  {
+    "filepath": "raw/ruido_fondo/amb_salon_silencioso_003_000483.wav",
+    "true": "ruido_fondo",
+    "pred": "rojo",
+    "confidence": 0.5324034094810486
+  },
+  {
+    "filepath": "raw/verde/Sebas_s17_000417.wav",
+    "true": "verde",
+    "pred": "detente",
+    "confidence": 0.5307856202125549
+  },
+  {
+    "filepath": "raw/ruido_fondo/amb_salon_silencioso_047_000527.wav",
+    "true": "ruido_fondo",
+    "pred": "rojo",
+    "confidence": 0.3448534309864044
+  }
+]

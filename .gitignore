@@ -83,10 +83,12 @@ backend/data/manifests/speakers.csv
 *.ogg
 
 # =====================
-# Trained model weights (linked from README)
+# Trained model weights
 # =====================
-backend/models/cnn_base/model.pt
-backend/models/bilstm/model.pt
-*.pt
+# Comentado: el peso del CNN (~400 KB) se commitea para que la otra compu
+# pueda inferir sin reentrenar. Si crece >5 MB, considerar Git LFS.
+# backend/models/cnn_base/model.pt
+# backend/models/bilstm/model.pt
+# *.pt
 *.onnx
 *.tflite

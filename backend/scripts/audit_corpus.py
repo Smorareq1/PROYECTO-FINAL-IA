@@ -23,6 +23,10 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# data root canonico, relativo al archivo del script (backend/data/), no al cwd
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_DATA_ROOT = BACKEND_ROOT / "data"
+
 
 def read_manifest(path: Path) -> list[dict]:
     if not path.exists():
@@ -51,7 +55,7 @@ def fmt_table(title: str, mapping: dict[str, int]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--data-root", default="backend/data")
+    parser.add_argument("--data-root", default=str(DEFAULT_DATA_ROOT))
     parser.add_argument("--manifest", default=None)
     parser.add_argument("--min-per-class", type=int, default=120)
     parser.add_argument("--min-snr-db", type=float, default=12.0)
